@@ -30,8 +30,7 @@ pipeline {
 
         stage('Deploy nginx/custom') {
             steps {
-                sh 'docker run -d -p 8080:80 nginx/custom:latest' // Порт змінено на 8080, щоб уникнути
-                                                                  // конфлікту, якщо порт 80 вже зайнятий.
+                sh 'docker run -d -p 80:80 nginx/custom:latest'
                 echo 'Deployment completed successfully!' // Повідомлення про результат виконання
             }
         }
