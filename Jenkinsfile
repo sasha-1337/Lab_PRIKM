@@ -13,9 +13,14 @@ pipeline {
         
         stage('Cleanup old containers') {
             steps {
-                sh 'docker stop $CONTAINER_NAME || true'
-                sh 'docker rm $CONTAINER_NAME || true'
-                echo "Stopping and removing existing container: $CONTAINER_NAME"
+                sh '''
+                if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
+                    echo "Stopping and removing existing container: $CONTAINER_NAME"
+                    docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
+                else
+                    echo "No existing container found, skipping cleanup."
+                fi
+                '''
             } // Додано автоматичне зупинення та видалення старих контейнерів перед новим розгортанням.
         }
         
