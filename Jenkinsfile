@@ -10,7 +10,7 @@ pipeline {
 
         stage('Build nginx/custom') {
             steps {
-                sh 'docker build -t nginx/custom:latest .'
+                sh 'docker run --rm nginx/custom:latest nginx -t'
             }
         }
 
