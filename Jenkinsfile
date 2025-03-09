@@ -10,13 +10,13 @@ pipeline {
 
         stage('Build nginx/custom') {
             steps {
-                sh 'docker run --rm nginx/custom:latest nginx -t'
+                sh 'docker build -t nginx/custom:latest .'
             }
         }
 
         stage('Test nginx/custom') {
             steps {
-                sh 'docker run --rm nginx/custom:latest'        // Додано тестовий запуск контейнера.
+                sh 'docker run --rm nginx/custom:latest nginx -t'        // Додано тестовий запуск контейнера.
                 echo 'Container built and tested successfully!' // Змінено повідомлення про виконання
             }
         }
