@@ -1,13 +1,24 @@
 pipeline {
     agent any
-
+    environment {
+        CONTAINER_NAME = "nginx_custom_lab" // Ім'я контейнера
+    }
+    
     stages {
         stage('Start') {
             steps {
                 echo 'Lab_1: nginx/custom'
             }
         }
-
+        
+        stage('Cleanup old containers') {
+            steps {
+                sh 'docker stop $CONTAINER_NAME || true'
+                sh 'docker rm $CONTAINER_NAME || true'
+                echo "Stopping and removing existing container: $CONTAINER_NAME"
+            } // Додано автоматичне зупинення та видалення старих контейнерів перед новим розгортанням.
+        }
+        
         stage('Build nginx/custom') {
             steps {
                 sh 'docker build -t nginx/custom:latest .'
@@ -21,16 +32,9 @@ pipeline {
             }
         }
 
-        stage('Cleanup old containers') {
-            steps {
-                sh 'docker stop $(docker ps -q --filter ancestor=nginx/custom:latest) || true'
-                sh 'docker rm $(docker ps -aq --filter ancestor=nginx/custom:latest) || true'
-            } // Додано автоматичне зупинення та видалення старих контейнерів перед новим розгортанням.
-        }
-
         stage('Deploy nginx/custom') {
             steps {
-                sh 'docker run -d -p 80:80 nginx/custom:latest'
+                sh 'docker run -d --name $CONTAINER_NAME -p 80:80 nginx/custom:latest'
                 echo 'Deployment completed successfully!' // Повідомлення про результат виконання
             }
         }
