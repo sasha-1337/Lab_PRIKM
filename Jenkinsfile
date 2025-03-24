@@ -9,21 +9,21 @@ pipeline {
         stage('Image build') {
             steps {
                 sh "docker build -t prikm:latest ."
-                sh "docker tag prikm назва_акаунту_dockerhub/prikm:latest"
-                sh "docker tag prikm назва_акаунту_dockerhub/prikm:$BUILD_NUMBER"
+                sh "docker tag prikm squeezyfish/lab2_prikm:latest"
+                sh "docker tag prikm squeezyfish/lab2_prikm:$BUILD_NUMBER"
             }
         }
         stage('Push to registry') {
             steps {
-                withDockerRegistry([ credentialsId: "ID_облікових даних", url: "" ]) {
-                    sh "docker push назва_акаунту_dockerhub/prikm:latest"
-                    sh "docker push назва_акаунту_dockerhub/prikm:$BUILD_NUMBER"
+                withDockerRegistry([ credentialsId: "dockerhub_token", url: "" ]) {
+                    sh "docker push squeezyfish/lab2_prikm:latest"
+                    sh "docker push squeezyfish/lab2_prikm:$BUILD_NUMBER"
                 }
             }
         }
         stage('Deploy image'){
             steps{
-                sh "docker run -d -p 80:80 назва_акаунту_dockerhub/prikm"
+                sh "docker run -d -p 80:80 squeezyfish/lab2_prikm"
             }
         }
     }
