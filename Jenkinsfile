@@ -1,46 +1,29 @@
 pipeline {
     agent any
-    environment {
-        CONTAINER_NAME = "nginx_custom_lab" // Ім'я контейнера
-    }
-    
     stages {
         stage('Start') {
             steps {
-                echo 'Lab_1: nginx/custom'
+                echo 'Lab_2: started by GitHub'
             }
         }
-        
-        stage('Cleanup old containers') {
+        stage('Image build') {
             steps {
-                sh '''
-                if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
-                    echo "Stopping and removing existing container: $CONTAINER_NAME"
-                    docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
-                else
-                    echo "No existing container found, skipping cleanup."
-                fi
-                '''
-            } // Додано автоматичне зупинення та видалення старих контейнерів перед новим розгортанням.
-        }
-        
-        stage('Build nginx/custom') {
-            steps {
-                sh 'docker build -t nginx/custom:latest .'
+                sh "docker build -t prikm:latest ."
+                sh "docker tag prikm назва_акаунту_dockerhub/prikm:latest"
+                sh "docker tag prikm назва_акаунту_dockerhub/prikm:$BUILD_NUMBER"
             }
         }
-
-        stage('Test nginx/custom') {
+        stage('Push to registry') {
             steps {
-                sh 'docker run --rm nginx/custom:latest nginx -t'        // Додано тестовий запуск контейнера.
-                echo 'Container built and tested successfully!' // Змінено повідомлення про виконання
+                withDockerRegistry([ credentialsId: "ID_облікових даних", url: "" ]) {
+                    sh "docker push назва_акаунту_dockerhub/prikm:latest"
+                    sh "docker push назва_акаунту_dockerhub/prikm:$BUILD_NUMBER"
+                }
             }
         }
-
-        stage('Deploy nginx/custom') {
-            steps {
-                sh 'docker run -d --name $CONTAINER_NAME -p 80:80 nginx/custom:latest'
-                echo 'Deployment completed successfully!' // Повідомлення про результат виконання
+        stage('Deploy image'){
+            steps{
+                sh "docker run -d -p 80:80 назва_акаунту_dockerhub/prikm"
             }
         }
     }
