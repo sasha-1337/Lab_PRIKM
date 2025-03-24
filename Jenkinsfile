@@ -37,7 +37,7 @@ pipeline {
 
         stage('Push to registry') {
             steps {
-                withDockerRegistry([credentialsId: "ID_облікових даних", url: ""]) {
+                withDockerRegistry([credentialsId: "dockerhub_token", url: ""]) {
                     sh '''
                     docker push $IMAGE_NAME:latest
                     docker push $IMAGE_NAME:$BUILD_NUMBER
