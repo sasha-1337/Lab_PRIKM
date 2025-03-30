@@ -1,3 +1,23 @@
+properties([
+    office365ConnectorWebhooks([
+        webhooks([
+            webhook([
+                name: 'Teams-O365',
+                url: 'https://lpnu.webhook.office.com/webhookb2/c62d9391-5f4c-4b1c-8257-1a135c776eeb@7631cd62-5187-4e15-8b8e-ef653e366e7a/IncomingWebhook/1f30225b34144f93ae0caa0ffbd91460/0b84c391-4760-45c8-926a-02f1d3c8311e/V2l6yxdYY6-FhYB01SjYClR_i-__cros0GitaDS6aFzL81', // Встав URL вебхука Teams
+                startNotification: false,
+                notifySuccess: true,
+                notifyAborted: false,
+                notifyNotBuilt: false,
+                notifyUnstable: true,
+                notifyFailure: true,
+                notifyBackToNormal: true,
+                notifyRepeatedFailure: false,
+                timeout: 30000
+            ])
+        ])
+    ])
+])
+
 pipeline {
     agent any
     environment {
