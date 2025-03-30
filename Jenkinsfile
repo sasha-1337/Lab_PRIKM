@@ -74,7 +74,7 @@ pipeline {
                 '''
             }
         }
-        
+    }
     post {
         success {
             office365ConnectorSend message: "Build and deployment successful for tag: latest",
@@ -86,4 +86,5 @@ pipeline {
         }
     }
 }
+    
 
