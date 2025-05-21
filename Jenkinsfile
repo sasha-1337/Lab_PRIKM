@@ -1,34 +1,29 @@
 properties([
-    pipelineTriggers([]),
-    office365ConnectorWebhooks([
-        [
-            name: 'Teams-O365',
-            url: 'https://lpnu.webhook.office.com/webhookb2/c62d9391-5f4c-4b1c-8257-1a135c776eeb@7631cd62-5187-4e15-8b8e-ef653e366e7a/IncomingWebhook/1f30225b34144f93ae0caa0ffbd91460/0b84c391-4760-45c8-926a-02f1d3c8311e/V2l6yxdYY6-FhYB01SjYClR_i-__cros0GitaDS6aFzL81',
-            startNotification: false,
-            notifySuccess: true,
-            notifyAborted: false,
-            notifyNotBuilt: false,
-            notifyUnstable: true,
-            notifyFailure: true,
-            notifyBackToNormal: true,
-            notifyRepeatedFailure: false,
-            timeout: 30000
-        ]
-    ])
+    pipelineTriggers([])
 ])
 
 pipeline {
     agent any
+
     environment {
         CONTAINER_NAME = "prikm_lab2"
         IMAGE_NAME = "squeezyfish/prikm"
-        TEAMS_WEBHOOK_URL = "https://lpnu.webhook.office.com/webhookb2/c62d9391-5f4c-4b1c-8257-1a135c776eeb@7631cd62-5187-4e15-8b8e-ef653e366e7a/IncomingWebhook/1f30225b34144f93ae0caa0ffbd91460/0b84c391-4760-45c8-926a-02f1d3c8311e/V2l6yxdYY6-FhYB01SjYClR_i-__cros0GitaDS6aFzL81"
+        TEAMS_WEBHOOK_URL = ""
     }
 
     stages {
         stage('Start') {
             steps {
                 echo 'Lab_2: started by GitHub'
+            }
+        }
+
+        stage('Fetch Teams webhook from Vault') {
+            steps {
+                script {
+                    def webhookSecret = vault(path: 'secret/data/msteams_webhook')
+                    env.TEAMS_WEBHOOK_URL = webhookSecret.data.url
+                }
             }
         }
 
@@ -75,16 +70,15 @@ pipeline {
             }
         }
     }
+
     post {
         success {
-            office365ConnectorSend message: "Build and deployment successful for tag: latest",
+            office365ConnectorSend message: "✅ Build and deployment successful for tag: latest",
                 webhookUrl: env.TEAMS_WEBHOOK_URL
         }
         failure {
-            office365ConnectorSend message: "Build failed! Check Jenkins logs.",
+            office365ConnectorSend message: "❌ Build failed! Check Jenkins logs.",
                 webhookUrl: env.TEAMS_WEBHOOK_URL
         }
     }
 }
-    
-
