@@ -1,84 +1,79 @@
-properties([
-    pipelineTriggers([])
-])
-
 pipeline {
     agent any
 
-    environment {
-        CONTAINER_NAME = "prikm_lab2"
-        IMAGE_NAME = "squeezyfish/prikm"
-        TEAMS_WEBHOOK_URL = ""
-    }
-
     stages {
-        stage('Start') {
+        stage('🔰 Початок процесу') {
             steps {
-                echo 'Lab_2: started by GitHub'
+                echo 'Старт: Lab_7 pipeline'
             }
         }
 
-        stage('Fetch Teams webhook from Vault') {
+        stage('🔐 Аутентифікація до HCP') {
             steps {
-                script {
-                    def webhookSecret = vault(path: 'secret/data/msteams_webhook')
-                    env.TEAMS_WEBHOOK_URL = webhookSecret.data.url
+                withCredentials([usernamePassword(
+                    credentialsId: 'hcp',
+                    usernameVariable: 'HCP_CLIENT_ID',
+                    passwordVariable: 'HCP_CLIENT_SECRET'
+                )]) {
+                    script {
+                        sh 'hcp auth login --client-id $HCP_CLIENT_ID --client-secret $HCP_CLIENT_SECRET'
+                    }
                 }
             }
         }
 
-        stage('Cleanup old containers') {
+        stage('⚙️ Ініціалізація HCP профілю') {
             steps {
-                sh '''
-                if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
-                    echo "Stopping and removing existing container: $CONTAINER_NAME"
-                    docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
-                else
-                    echo "No existing container found, skipping cleanup."
-                fi
-                '''
+                sh 'hcp profile set vault-secrets/app Lab-7'
             }
         }
 
-        stage('Image build') {
+        stage('🐳 Збірка Docker образу nginx/custom') {
             steps {
-                sh '''
-                docker build -t prikm:latest .
-                docker tag prikm $IMAGE_NAME:latest
-                docker tag prikm $IMAGE_NAME:$BUILD_NUMBER
-                '''
+                sh 'docker build -t nginx/custom:latest .'
             }
         }
 
-        stage('Push to registry') {
+        stage('🚀 Деплой nginx/custom контейнера') {
             steps {
-                withDockerRegistry([credentialsId: "dockerhub_token", url: ""]) {
-                    sh '''
-                    docker push $IMAGE_NAME:latest
-                    docker push $IMAGE_NAME:$BUILD_NUMBER
-                    '''
-                }
+                sh 'docker run -d -p 80:80 nginx/custom:latest'
             }
         }
 
-        stage('Deploy image') {
+        stage('✅ Завершення процесу') {
             steps {
-                sh '''
-                docker run -d --name $CONTAINER_NAME -p 80:80 $IMAGE_NAME:latest
-                echo "Deployment completed successfully!"
-                '''
+                echo 'Завершення: Lab_7 pipeline'
             }
         }
     }
 
     post {
-        success {
-            office365ConnectorSend message: "✅ Build and deployment successful for tag: latest",
-                webhookUrl: env.TEAMS_WEBHOOK_URL
+        always {
+            script {
+                env.webhookUrl = sh(
+                    script: 'hcp vault-secrets secrets open teams_microsoft_webhook --format=json | jq -r .static_version.value',
+                    returnStdout: true
+                ).trim()
+            }
         }
+
+        success {
+            office365ConnectorSend(
+                webhookUrl: webhookUrl,
+                message: "✅ Збірка пройшла успішно!",
+                status: "Success",
+                color: "00FF00"
+            )
+        }
+
         failure {
-            office365ConnectorSend message: "❌ Build failed! Check Jenkins logs.",
-                webhookUrl: env.TEAMS_WEBHOOK_URL
+            office365ConnectorSend(
+                webhookUrl: webhookUrl,
+                message: "❌ Збірка зазнала невдачі!",
+                status: "Failure",
+                color: "FF0000"
+            )
         }
     }
 }
+
