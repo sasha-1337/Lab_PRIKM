@@ -11,7 +11,7 @@ pipeline {
         stage('🔐 Аутентифікація до HCP') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'hcp',
+                    credentialsId: 'hcp_credentials',
                     usernameVariable: 'HCP_CLIENT_ID',
                     passwordVariable: 'HCP_CLIENT_SECRET'
                 )]) {
